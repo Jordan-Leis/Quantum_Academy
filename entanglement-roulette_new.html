@@ -1,0 +1,861 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>Quantum Playground – Entanglement & Roulette</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=Space+Grotesk:wght@700&display=swap" rel="stylesheet">
+  
+  <style>
+    /* === visual polish by Claude === */
+    :root {
+      --bg: #161627;
+      --main: #36416d;
+      --secondary: #adbcff;
+      --accent: #7ee081;
+      --cta: #00cfff;
+      --light: #ecfef9;
+      --dark: #0f0f1a;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: linear-gradient(135deg, var(--bg) 0%, var(--dark) 100%);
+      color: var(--light);
+      min-height: 100vh;
+      line-height: 1.6;
+    }
+
+    header {
+      background: rgba(54, 65, 109, 0.1);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(173, 188, 255, 0.1);
+      padding: 1.5rem 0;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .header-content {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    h1 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 700;
+      font-size: 1.8rem;
+      background: linear-gradient(135deg, var(--cta), var(--secondary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .nav-tabs {
+      display: flex;
+      gap: 0.5rem;
+      background: rgba(15, 15, 26, 0.5);
+      padding: 0.5rem;
+      border-radius: 12px;
+      border: 1px solid rgba(173, 188, 255, 0.1);
+    }
+
+    .tab {
+      background: transparent;
+      border: none;
+      color: var(--secondary);
+      padding: 0.75rem 1.5rem;
+      border-radius: 8px;
+      font-family: 'Inter', sans-serif;
+      font-weight: 500;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .tab:hover {
+      background: rgba(173, 188, 255, 0.1);
+      transform: translateY(-1px);
+    }
+
+    .tab.active {
+      background: linear-gradient(135deg, var(--cta), var(--accent));
+      color: var(--dark);
+      box-shadow: 0 4px 20px rgba(0, 207, 255, 0.3);
+    }
+
+    .tab:focus {
+      outline: 2px solid var(--cta);
+      outline-offset: 2px;
+    }
+
+    #info {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      width: 56px;
+      height: 56px;
+      background: linear-gradient(135deg, var(--cta), var(--accent));
+      border: none;
+      border-radius: 50%;
+      cursor: pointer;
+      box-shadow: 0 8px 32px rgba(0, 207, 255, 0.3);
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      color: var(--dark);
+      z-index: 1000;
+    }
+
+    #info::before {
+      content: "?";
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 700;
+    }
+
+    #info:hover {
+      transform: scale(1.1);
+      box-shadow: 0 12px 40px rgba(0, 207, 255, 0.4);
+    }
+
+    #info:focus {
+      outline: 2px solid var(--cta);
+      outline-offset: 4px;
+    }
+
+    main {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+
+    section {
+      opacity: 0;
+      transform: translateY(20px);
+      transition: all 0.3s ease;
+    }
+
+    section.active {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .demo-container {
+      background: rgba(54, 65, 109, 0.1);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(173, 188, 255, 0.1);
+      border-radius: 16px;
+      padding: 2rem;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    }
+
+    h2 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 700;
+      font-size: 2rem;
+      margin-bottom: 1rem;
+      color: var(--light);
+      text-align: center;
+    }
+
+    .description {
+      text-align: center;
+      color: var(--secondary);
+      margin-bottom: 2rem;
+      font-size: 1.1rem;
+      max-width: 600px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    /* Entanglement Demo Styles */
+    .entanglement-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+      margin-bottom: 2rem;
+    }
+
+    .qubit-container {
+      background: rgba(15, 15, 26, 0.5);
+      border: 1px solid rgba(173, 188, 255, 0.2);
+      border-radius: 12px;
+      padding: 1.5rem;
+      text-align: center;
+    }
+
+    .qubit-container h3 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 700;
+      font-size: 1.2rem;
+      margin-bottom: 1rem;
+      color: var(--accent);
+    }
+
+    .qubit {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      margin: 1rem auto;
+      background: linear-gradient(135deg, var(--secondary), var(--cta));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 700;
+      font-size: 1.5rem;
+      color: var(--dark);
+      box-shadow: 0 4px 20px rgba(173, 188, 255, 0.3);
+      transition: all 0.3s ease;
+    }
+
+    .qubit.spin {
+      animation: quantumSpin 0.8s ease-in-out;
+    }
+
+    @keyframes quantumSpin {
+      0% { transform: scale(1) rotate(0deg); }
+      50% { transform: scale(1.2) rotate(180deg); box-shadow: 0 8px 40px rgba(126, 224, 129, 0.5); }
+      100% { transform: scale(1) rotate(360deg); }
+    }
+
+    .controls {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      margin-top: 2rem;
+    }
+
+    button {
+      background: linear-gradient(135deg, var(--main), var(--secondary));
+      border: none;
+      color: var(--light);
+      padding: 0.875rem 1.75rem;
+      border-radius: 8px;
+      font-family: 'Inter', sans-serif;
+      font-weight: 500;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    button::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+      transition: left 0.5s;
+    }
+
+    button:hover::before {
+      left: 100%;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(54, 65, 109, 0.4);
+    }
+
+    button:focus {
+      outline: 2px solid var(--cta);
+      outline-offset: 2px;
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    .primary-btn {
+      background: linear-gradient(135deg, var(--cta), var(--accent));
+      color: var(--dark);
+      box-shadow: 0 4px 20px rgba(0, 207, 255, 0.3);
+    }
+
+    .primary-btn:hover {
+      box-shadow: 0 8px 30px rgba(0, 207, 255, 0.4);
+    }
+
+    /* Roulette Demo Styles */
+    .roulette-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2rem;
+    }
+
+    .canvas-container {
+      position: relative;
+      display: inline-block;
+    }
+
+    #roulette-canvas {
+      border-radius: 50%;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+      transition: all 0.3s ease;
+    }
+
+    .progress-ring {
+      position: absolute;
+      top: -10px;
+      left: -10px;
+      width: calc(100% + 20px);
+      height: calc(100% + 20px);
+      border-radius: 50%;
+      border: 3px solid transparent;
+      background: linear-gradient(var(--bg), var(--bg)) padding-box,
+                  linear-gradient(45deg, var(--cta), var(--accent)) border-box;
+      opacity: 0;
+      transition: all 0.3s ease;
+    }
+
+    .progress-ring.spinning {
+      opacity: 1;
+      animation: progressSpin 2s linear infinite;
+    }
+
+    @keyframes progressSpin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    .roulette-controls {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1.5rem;
+    }
+
+    .input-group {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    label {
+      font-weight: 500;
+      color: var(--secondary);
+      font-size: 0.9rem;
+    }
+
+    input[type="number"] {
+      background: rgba(15, 15, 26, 0.7);
+      border: 1px solid rgba(173, 188, 255, 0.2);
+      border-radius: 8px;
+      color: var(--light);
+      padding: 0.75rem 1rem;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.95rem;
+      width: 120px;
+      text-align: center;
+      transition: all 0.3s ease;
+    }
+
+    input[type="number"]:focus {
+      outline: none;
+      border-color: var(--cta);
+      box-shadow: 0 0 0 3px rgba(0, 207, 255, 0.1);
+    }
+
+    #result {
+      margin-top: 1rem;
+      font-size: 1.1rem;
+      font-weight: 500;
+      color: var(--accent);
+      text-align: center;
+      min-height: 1.5rem;
+    }
+
+    /* Modal Styles */
+    #modal {
+      display: none;
+      position: fixed;
+      z-index: 2000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(10px);
+    }
+
+    .modal-content {
+      background: linear-gradient(135deg, var(--main), var(--bg));
+      margin: 5% auto;
+      padding: 2rem;
+      border: 1px solid rgba(173, 188, 255, 0.2);
+      border-radius: 16px;
+      width: 90%;
+      max-width: 600px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+      position: relative;
+      animation: modalSlideIn 0.3s ease;
+    }
+
+    @keyframes modalSlideIn {
+      from {
+        opacity: 0;
+        transform: translateY(-50px) scale(0.9);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    .close {
+      position: absolute;
+      top: 1rem;
+      right: 1.5rem;
+      color: var(--secondary);
+      font-size: 2rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: color 0.3s ease;
+    }
+
+    .close:hover,
+    .close:focus {
+      color: var(--light);
+    }
+
+    .modal-content h3 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 700;
+      font-size: 1.5rem;
+      margin-bottom: 1rem;
+      color: var(--light);
+    }
+
+    .modal-content p {
+      color: var(--secondary);
+      line-height: 1.6;
+      margin-bottom: 1rem;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 700px) {
+      .header-content {
+        flex-direction: column;
+        gap: 1rem;
+        padding: 0 1rem;
+      }
+
+      h1 {
+        font-size: 1.5rem;
+      }
+
+      .nav-tabs {
+        width: 100%;
+        justify-content: center;
+      }
+
+      .tab {
+        flex: 1;
+        padding: 0.75rem 0.5rem;
+        font-size: 0.85rem;
+      }
+
+      main {
+        padding: 1rem;
+      }
+
+      .demo-container {
+        padding: 1.5rem;
+      }
+
+      .entanglement-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+      }
+
+      .controls {
+        flex-direction: column;
+      }
+
+      .roulette-controls {
+        gap: 1rem;
+      }
+
+      #info {
+        bottom: 1rem;
+        right: 1rem;
+        width: 48px;
+        height: 48px;
+      }
+
+      .modal-content {
+        margin: 10% auto;
+        padding: 1.5rem;
+        width: 95%;
+      }
+    }
+
+    /* Focus ring enhancement for accessibility */
+    *:focus {
+      outline: 2px solid var(--cta);
+      outline-offset: 2px;
+    }
+
+    /* High contrast mode support */
+    @media (prefers-contrast: high) {
+      .demo-container {
+        border-width: 2px;
+      }
+      
+      button {
+        border: 1px solid var(--secondary);
+      }
+    }
+
+    /* Reduced motion support */
+    @media (prefers-reduced-motion: reduce) {
+      * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+  </style>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+  <header>
+    <div class="header-content">
+      <h1>Quantum Playground</h1>
+      <nav>
+        <div class="nav-tabs">
+          <button class="tab active" data-section="entanglement">Entanglement</button>
+          <button class="tab" data-section="roulette">Quantum Roulette</button>
+        </div>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section id="entanglement" class="active">
+      <div class="demo-container">
+        <h2>Quantum Entanglement Demo</h2>
+        <p class="description">
+          Watch two quantum particles become entangled. When you measure one, 
+          the other instantly responds, no matter the distance between them!
+        </p>
+        
+        <div class="entanglement-grid">
+          <div class="qubit-container">
+            <h3>Qubit A</h3>
+            <div class="qubit" id="qubitA">?</div>
+            <p>State: <span id="stateA">Superposition</span></p>
+          </div>
+          
+          <div class="qubit-container">
+            <h3>Qubit B</h3>
+            <div class="qubit" id="qubitB">?</div>
+            <p>State: <span id="stateB">Superposition</span></p>
+          </div>
+        </div>
+        
+        <div class="controls">
+          <button id="entangle" class="primary-btn">Create Entanglement</button>
+          <button id="measureA">Measure Qubit A</button>
+          <button id="measureB">Measure Qubit B</button>
+          <button id="reset">Reset</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="roulette">
+      <div class="demo-container">
+        <h2>Quantum Roulette</h2>
+        <p class="description">
+          Experience quantum randomness! This roulette uses quantum superposition 
+          to generate truly random results.
+        </p>
+        
+        <div class="roulette-container">
+          <div class="canvas-container">
+            <div class="progress-ring" id="progress-ring"></div>
+            <canvas id="roulette-canvas" width="300" height="300"></canvas>
+          </div>
+          
+          <div class="roulette-controls">
+            <div class="input-group">
+              <label for="numSlots">Number of slots:</label>
+              <input type="number" id="numSlots" min="2" max="20" value="8">
+            </div>
+            
+            <button id="spin" class="primary-btn">Spin the Wheel!</button>
+            
+            <div id="result"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <button id="info">?</button>
+
+  <div id="modal">
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <h3>About Quantum Playground</h3>
+      <p>This playground demonstrates key concepts in quantum computing through interactive visualizations.</p>
+      <p><strong>Entanglement Demo:</strong> Shows how quantum particles can be correlated in ways that seem to defy classical physics.</p>
+      <p><strong>Quantum Roulette:</strong> Uses quantum superposition principles to generate truly random outcomes.</p>
+      <p>These demos are simplified representations designed to help build intuition about quantum phenomena.</p>
+    </div>
+  </div>
+
+  <script>
+    // Tab switching
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        const target = tab.dataset.section;
+        
+        // Update active tab
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        
+        // Update active section
+        document.querySelectorAll('section').forEach(s => s.classList.remove('active'));
+        document.getElementById(target).classList.add('active');
+      });
+    });
+
+    // Entanglement Demo
+    let entangled = false;
+    let measuredA = false;
+    let measuredB = false;
+    let stateA = null;
+    let stateB = null;
+
+    const qubitA = document.getElementById('qubitA');
+    const qubitB = document.getElementById('qubitB');
+    const stateASpan = document.getElementById('stateA');
+    const stateBSpan = document.getElementById('stateB');
+
+    document.getElementById('entangle').addEventListener('click', () => {
+      entangled = true;
+      measuredA = false;
+      measuredB = false;
+      stateA = null;
+      stateB = null;
+      
+      qubitA.textContent = '?';
+      qubitB.textContent = '?';
+      stateASpan.textContent = 'Entangled';
+      stateBSpan.textContent = 'Entangled';
+      
+      qubitA.classList.add('spin');
+      qubitB.classList.add('spin');
+      
+      setTimeout(() => {
+        qubitA.classList.remove('spin');
+        qubitB.classList.remove('spin');
+      }, 800);
+    });
+
+    document.getElementById('measureA').addEventListener('click', () => {
+      if (!entangled) return;
+      
+      if (!measuredA && !measuredB) {
+        stateA = Math.random() < 0.5 ? 0 : 1;
+        stateB = 1 - stateA; // Opposite state due to entanglement
+      }
+      
+      measuredA = true;
+      qubitA.textContent = stateA;
+      stateASpan.textContent = stateA === 0 ? 'Spin Down' : 'Spin Up';
+      
+      if (measuredB) {
+        qubitB.textContent = stateB;
+        stateBSpan.textContent = stateB === 0 ? 'Spin Down' : 'Spin Up';
+      }
+      
+      qubitA.classList.add('spin');
+      if (measuredB) qubitB.classList.add('spin');
+      
+      setTimeout(() => {
+        qubitA.classList.remove('spin');
+        if (measuredB) qubitB.classList.remove('spin');
+      }, 800);
+    });
+
+    document.getElementById('measureB').addEventListener('click', () => {
+      if (!entangled) return;
+      
+      if (!measuredA && !measuredB) {
+        stateB = Math.random() < 0.5 ? 0 : 1;
+        stateA = 1 - stateB; // Opposite state due to entanglement
+      }
+      
+      measuredB = true;
+      qubitB.textContent = stateB;
+      stateBSpan.textContent = stateB === 0 ? 'Spin Down' : 'Spin Up';
+      
+      if (measuredA) {
+        qubitA.textContent = stateA;
+        stateASpan.textContent = stateA === 0 ? 'Spin Down' : 'Spin Up';
+      }
+      
+      qubitB.classList.add('spin');
+      if (measuredA) qubitA.classList.add('spin');
+      
+      setTimeout(() => {
+        qubitB.classList.remove('spin');
+        if (measuredA) qubitA.classList.remove('spin');
+      }, 800);
+    });
+
+    document.getElementById('reset').addEventListener('click', () => {
+      entangled = false;
+      measuredA = false;
+      measuredB = false;
+      stateA = null;
+      stateB = null;
+      
+      qubitA.textContent = '?';
+      qubitB.textContent = '?';
+      stateASpan.textContent = 'Superposition';
+      stateBSpan.textContent = 'Superposition';
+    });
+
+    // Quantum Roulette
+    const canvas = document.getElementById('roulette-canvas');
+    const ctx = canvas.getContext('2d');
+    const progressRing = document.getElementById('progress-ring');
+    let spinning = false;
+
+    function drawRoulette(numSlots, highlightSlot = -1) {
+      const centerX = canvas.width / 2;
+      const centerY = canvas.height / 2;
+      const radius = 140;
+      
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      
+      const anglePerSlot = (2 * Math.PI) / numSlots;
+      
+      for (let i = 0; i < numSlots; i++) {
+        const startAngle = i * anglePerSlot - Math.PI / 2;
+        const endAngle = startAngle + anglePerSlot;
+        
+        ctx.beginPath();
+        ctx.moveTo(centerX, centerY);
+        ctx.arc(centerX, centerY, radius, startAngle, endAngle);
+        ctx.closePath();
+        
+        if (i === highlightSlot) {
+          ctx.fillStyle = '#7ee081';
+        } else {
+          ctx.fillStyle = i % 2 === 0 ? '#36416d' : '#adbcff';
+        }
+        ctx.fill();
+        
+        ctx.strokeStyle = '#161627';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        
+        // Draw number
+        const textAngle = startAngle + anglePerSlot / 2;
+        const textX = centerX + Math.cos(textAngle) * (radius * 0.7);
+        const textY = centerY + Math.sin(textAngle) * (radius * 0.7);
+        
+        ctx.fillStyle = i === highlightSlot ? '#161627' : (i % 2 === 0 ? '#ecfef9' : '#161627');
+        ctx.font = 'bold 18px Space Grotesk';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText((i + 1).toString(), textX, textY);
+      }
+      
+      // Draw pointer
+      ctx.beginPath();
+      ctx.moveTo(centerX, centerY - radius - 20);
+      ctx.lineTo(centerX - 10, centerY - radius);
+      ctx.lineTo(centerX + 10, centerY - radius);
+      ctx.closePath();
+      ctx.fillStyle = '#00cfff';
+      ctx.fill();
+    }
+
+    function updateRoulette() {
+      const numSlots = parseInt(document.getElementById('numSlots').value);
+      drawRoulette(numSlots);
+    }
+
+    document.getElementById('numSlots').addEventListener('input', updateRoulette);
+
+    document.getElementById('spin').addEventListener('click', () => {
+      if (spinning) return;
+      
+      spinning = true;
+      const numSlots = parseInt(document.getElementById('numSlots').value);
+      const spinButton = document.getElementById('spin');
+      const resultDiv = document.getElementById('result');
+      
+      spinButton.disabled = true;
+      spinButton.textContent = 'Spinning...';
+      resultDiv.textContent = '';
+      
+      // Show progress ring
+      progressRing.classList.add('spinning');
+      
+      // Simulate quantum measurement
+      const spinDuration = 2000 + Math.random() * 1000;
+      const winner = Math.floor(Math.random() * numSlots);
+      
+      setTimeout(() => {
+        spinning = false;
+        spinButton.disabled = false;
+        spinButton.textContent = 'Spin the Wheel!';
+        progressRing.classList.remove('spinning');
+        
+        drawRoulette(numSlots, winner);
+        resultDiv.textContent = `Quantum result: ${winner + 1}!`;
+      }, spinDuration);
+    });
+
+    // Modal
+    const modal = document.getElementById('modal');
+    const infoBtn = document.getElementById('info');
+    const closeBtn = document.querySelector('.close');
+
+    infoBtn.addEventListener('click', () => {
+      modal.style.display = 'block';
+    });
+
+    closeBtn.addEventListener('click', () => {
+      modal.style.display = 'none';
+    });
+
+    window.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        modal.style.display = 'none';
+      }
+    });
+
+    // Initialize
+    updateRoulette();
+  </script>
+</body>
+</html>

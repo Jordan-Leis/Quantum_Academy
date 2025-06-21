@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>Quantum Playground – Entanglement & Roulette</title>
+  <style>
+    :root{
+      --bg:#161627;--main:#36416d;--secondary:#adbcff;
+      --accent:#7ee081;--muted:#26263e;
+      --light:#ecfef9;--dark:#0f0f1a;
+    }
+    *{box-sizing:border-box;margin:0;padding:0;font-family:"DM Sans",sans-serif}
+    body{background:var(--bg);color:var(--light);min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:2rem;gap:1.6rem}
+    h1{color:var(--secondary);text-align:center}
+    nav{display:flex;gap:.8rem;flex-wrap:wrap;justify-content:center;margin-bottom:.4rem}
+    nav button{border:none;border-radius:.55rem;padding:.45rem 1rem;font-weight:600;cursor:pointer;background:var(--secondary);color:var(--dark);transition:transform .12s}
+    nav button:hover{transform:translateY(-2px)}
+    nav button.active{background:var(--accent)}
+    section{display:none;flex-direction:column;align-items:center;gap:1rem;width:100%;max-width:950px;margin:0 auto}
+    section.active{display:flex}
+    canvas,svg{background:rgba(255,255,255,.04);border:1px solid var(--main);border-radius:.75rem}
+    #entSvg{width:600px;height:520px}
+    #wheel{display:block;width:100%;aspect-ratio:1/1}
+    .controls{display:flex;flex-wrap:wrap;gap:.8rem;align-items:center;justify-content:center;margin-top:.25rem}
+    .btn{background:var(--accent);color:var(--dark);border:none;border-radius:.55rem;padding:.45rem 1rem;font-weight:600;cursor:pointer}
+    label{font-size:.95rem}
+    #result{font-size:1.2rem;font-weight:700;margin-top:.3rem}
+    /* modal */
+    #info{position:absolute;top:18px;right:18px;border:none;background:var(--secondary);color:var(--dark);font-weight:700;padding:.35rem .6rem;border-radius:.5rem;cursor:pointer}
+    .modal{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:1000}
+    .card{background:var(--bg);border:1px solid var(--main);border-radius:.75rem;padding:1.3rem;max-width:500px}
+    .card h3{color:var(--accent);margin-bottom:.6rem}
+    .card p{line-height:1.35;font-size:.95rem;margin-bottom:.6rem}
+  </style>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+
+  <button id="info">i</button>
+  <h1>Quantum Interactive Demos</h1>
+
+  <!-- primary navigation -->
+  <nav>
+    <button data-sec="ent" class="active">Entanglement</button>
+    <button data-sec="rou">Roulette</button>
+  </nav>
+
+  <!-- Entanglement -->
+  <section id="ent" class="active">
+    <svg id="entSvg"></svg>
+    <div class="controls">
+      <button id="addQ" class="btn">Add Qubit</button>
+      <button id="resetQ" class="btn">Reset</button>
+    </div>
+  </section>
+
+  <!-- Roulette -->
+  <section id="rou">
+    <div style="width:100%;max-width:600px"><canvas id="wheel"></canvas></div>
+    <div class="controls">
+      <label>Qubits:</label>
+      <select id="qbits"><option>1</option><option>2</option><option>3</option></select>
+      <label>P(|00…0⟩):</label>
+      <input type="range" id="amp" min="0" max="1" step="0.01" value="0.5">
+      <button id="spin" class="btn">Spin</button>
+      <button class="btn gate" data-g="X1">X₁</button><button class="btn gate" data-g="X2">X₂</button><button class="btn gate" data-g="X3">X₃</button>
+      <button class="btn gate" data-g="H1">H₁</button><button class="btn gate" data-g="H2">H₂</button><button class="btn gate" data-g="H3">H₃</button>
+    </div>
+    <div id="result"></div>
+  </section>
+
+  <!-- modals -->
+  <div id="mEnt" class="modal">
+    <div class="card">
+      <h3>Entanglement Visualiser</h3>
+      <p>Click one node then another to entangle/disentangle. Double‑click any node to <em>measure</em> its whole cluster (collapses superposition randomly).</p>
+      <p>Drag nodes freely; “Add Qubit” inserts a new |ψ⟩, and “Reset” clears links & measurements.</p>
+      <button class="btn" onclick="this.closest('.modal').style.display='none'">Close</button>
+    </div>
+  </div>
+  <div id="mRou" class="modal">
+    <div class="card">
+      <h3>Measurement Roulette</h3>
+      <p>Sectors correspond to computational‑basis states; their areas represent measurement probabilities.</p>
+      <p><strong>Amplitude slider</strong> sets P(|00…0⟩) & re‑normalises others. <strong>Xᵢ</strong> flips bit <i>i</i>; <strong>Hᵢ</strong> averages paired probabilities (classical Hadamard analogue).</p>
+      <button class="btn" onclick="this.closest('.modal').style.display='none'">Close</button>
+    </div>
+  </div>
+
+<script>
+/* ---------- shared nav ---------- */
+document.querySelectorAll('nav button').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('nav button').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('section').forEach(s=>s.classList.remove('active'));
+    document.getElementById(btn.dataset.sec).classList.add('active');
+    /* defer resize until after layout update */
+    setTimeout(()=>{ if(btn.dataset.sec==='rou') window.rouResize(); },10);
+  });
+});
+document.getElementById('info').onclick=()=>{
+  const id=document.querySelector('section.active').id==='ent'?'mEnt':'mRou';
+  document.getElementById(id).style.display='flex';
+};
+
+/* ---------- Entanglement SVG (D3) ---------- */
+(function(){
+  const svg=d3.select('#entSvg'),
+        W=parseFloat(svg.style('width')), H=parseFloat(svg.style('height')), R=22;
+  const nodes=[0,1,2,3].map(i=>({id:i,state:'|ψ⟩',x:W/2+Math.random()*80-40,y:H/2+Math.random()*80-40})),
+        links=[];
+  let selected=null;
+
+  svg.append('defs').html('<filter id="g"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>');
+  const linkG=svg.append('g').attr('stroke','var(--accent)').attr('stroke-width',3).attr('filter','url(#g)');
+  const nodeG=svg.append('g');
+
+  const sim=d3.forceSimulation(nodes)
+    .force('charge',d3.forceManyBody().strength(-220))
+    .force('center',d3.forceCenter(W/2,H/2))
+    .force('link',d3.forceLink(links).distance(140).id(d=>d.id))
+    .on('tick',tick);
+
+  /* drag helpers to keep sim lively */
+  function dragStarted(e,d){
+    if(!e.active) sim.alphaTarget(0.3).restart();
+    d.fx=d.x; d.fy=d.y;
+  }
+  function dragged(e,d){
+    d.fx=e.x; d.fy=e.y;
+  }
+  function dragEnded(e,d){
+    if(!e.active) sim.alphaTarget(0);
+    d.fx=null; d.fy=null;
+  }
+
+  function update(){
+    linkG.selectAll('line').data(links).join('line');
+    const n=nodeG.selectAll('g').data(nodes, d=>d.id).join(enter=>{
+      const g=enter.append('g').style('cursor','pointer');
+      g.append('circle').attr('r',R).attr('fill','var(--secondary)').attr('stroke','var(--main)').attr('stroke-width',2);
+      g.append('text').attr('dy','.35em').attr('text-anchor','middle').attr('fill','var(--dark)');
+      return g;
+    });
+    n.select('text').text(d=>d.state);
+    n.on('click',(e,d)=>handleClick(d))
+     .on('dblclick',(e,d)=>measure(d))
+     .call(d3.drag().on('start',dragStarted).on('drag',dragged).on('end',dragEnded));
+    sim.nodes(nodes);          // <= keep simulation aware of new nodes
+    sim.force('link').links(links);
+    sim.alpha(0.8).restart();  // kick
+  }
+
+  function handleClick(d){
+    const highlight=n=>nodeG.selectAll('g').filter(x=>x===n)
+          .select('circle').attr('stroke','var(--accent)').attr('stroke-width',4);
+    const unhighlight=n=>nodeG.selectAll('g').filter(x=>x===n)
+          .select('circle').attr('stroke','var(--main)').attr('stroke-width',2);
+    if(!selected){ selected=d; highlight(d); }
+    else if(selected===d){ unhighlight(d); selected=null; }
+    else{
+      const idx=links.findIndex(l=>(l.source===d && l.target===selected)||(l.target===d && l.source===selected));
+      idx>-1 ? links.splice(idx,1) : links.push({source:selected,target:d});
+      unhighlight(selected); selected=null;
+      update();
+    }
+  }
+
+  function measure(seed){
+    const stack=[seed], set=new Set();
+    while(stack.length){
+      const n=stack.pop(); set.add(n);
+      links.forEach(l=>{
+        if(l.source===n && !set.has(l.target)) stack.push(l.target);
+        if(l.target===n && !set.has(l.source)) stack.push(l.source);
+      });
+    }
+    set.forEach(n=>{ n.state=Math.random()<0.5?'|0⟩':'|1⟩'; });
+    nodeG.selectAll('g').filter(d=>set.has(d)).select('circle').attr('fill','var(--accent)');
+    update();
+  }
+
+  function tick(){
+    nodes.forEach(n=>{
+      n.x=Math.max(R,Math.min(W-R,n.x));
+      n.y=Math.max(R,Math.min(H-R,n.y));
+    });
+    linkG.selectAll('line')
+         .attr('x1',d=>d.source.x).attr('y1',d=>d.source.y)
+         .attr('x2',d=>d.target.x).attr('y2',d=>d.target.y);
+    nodeG.selectAll('g').attr('transform',d=>`translate(${d.x},${d.y})`);
+  }
+
+  document.getElementById('addQ').onclick=()=>{
+    const id=nodes.length;
+    nodes.push({id,state:'|ψ⟩',x:W/2+Math.random()*50-25,y:H/2+Math.random()*50-25});
+    update();
+  };
+  document.getElementById('resetQ').onclick=()=>{
+    links.splice(0);
+    nodes.forEach(n=>{n.state='|ψ⟩';});
+    nodeG.selectAll('circle').attr('fill','var(--secondary)'); update();
+  };
+  update();
+})();
+
+/* ---------- Roulette canvas ---------- */
+(function(){
+  const wrap=document.getElementById('wheel').parentElement,
+        canvas=document.getElementById('wheel'),
+        ctx=canvas.getContext('2d'),
+        root=getComputedStyle(document.documentElement),
+        ALT=[root.getPropertyValue('--accent').trim(),root.getPropertyValue('--muted').trim()],
+        CLR_L=root.getPropertyValue('--light').trim(),
+        CLR_D=root.getPropertyValue('--dark').trim();
+  let n=1,probs=[.5,.5],rot=0;
+
+  const amp=document.getElementById('amp'),
+        result=document.getElementById('result');
+
+  function label(i){return `|${i.toString(2).padStart(n,'0')}⟩`;}
+
+  function draw(){
+    const w=canvas.width, c=w/2, r=w/2-20;
+    ctx.clearRect(0,0,w,w);
+    let a=rot;
+    probs.forEach((p,i)=>{
+      const ang=p*2*Math.PI;
+      ctx.beginPath(); ctx.moveTo(c,c); ctx.arc(c,c,r,a,a+ang); ctx.closePath();
+      ctx.fillStyle=ALT[i%2]; ctx.fill();
+      ctx.save(); ctx.translate(c,c); ctx.rotate(a+ang/2);
+      ctx.fillStyle=i%2?CLR_L:CLR_D;
+      ctx.font=`700 ${Math.max(12,w*0.045)}px DM Sans`; ctx.textAlign='center';
+      ctx.fillText(label(i),r*0.55,0);
+      ctx.restore();
+      a+=ang;
+    });
+    const h=r*0.12;
+    ctx.fillStyle=CLR_L;
+    ctx.beginPath(); ctx.moveTo(c,c-r-12);
+    ctx.lineTo(c-h*0.5,c-r-h-12); ctx.lineTo(c+h*0.5,c-r-h-12);
+    ctx.closePath(); ctx.fill();
+  }
+
+  function resize(){
+    const s=Math.min(wrap.clientWidth||600,600);  // in case called while hidden
+    if(!s) return;
+    canvas.width=canvas.height=s;
+    draw();
+  }
+  window.rouResize=resize;
+  resize();
+
+  /* slider */
+  amp.oninput=e=>{
+    const p0=parseFloat(e.target.value), rem=1-p0, rest=probs.length-1;
+    probs[0]=p0;
+    for(let i=1;i<probs.length;i++) probs[i]=rem/rest;
+    draw();
+  };
+
+  /* qubit count */
+  document.getElementById('qbits').onchange=e=>{
+    n=+e.target.value;
+    probs=Array(1<<n).fill(1/(1<<n));
+    amp.value=1/(1<<n);
+    toggleGates(); resize();
+  };
+
+  function toggleGates(){
+    document.querySelectorAll('.gate').forEach(b=>{
+      b.style.display = (+b.dataset.g[1] <= n) ? 'inline-block' : 'none';
+    });
+  }
+  toggleGates();
+
+  /* gates */
+  document.querySelectorAll('.gate').forEach(b=>b.onclick=()=>applyGate(b.dataset.g));
+  function applyGate(cmd){
+    const bit=+cmd[1]-1, len=1<<n, next=Array(len).fill(0);
+    if(cmd[0]==='X'){
+      for(let i=0;i<len;i++) next[i^(1<<bit)]=probs[i];
+    }else{
+      for(let i=0;i<len;i++){
+        const j=i^(1<<bit);
+        if(i<j){
+          const avg=(probs[i]+probs[j])/2;
+          next[i]=next[j]=avg;
+        }
+      }
+    }
+    probs=next; draw();
+  }
+
+  /* helper: sector under pointer (top/north) */
+  function sectorAtPointer(){
+    const targetAng=(3*Math.PI/2 - rot)%(2*Math.PI);  // arrow at -90°
+    let sum=0;
+    for(let i=0;i<probs.length;i++){
+      const next=sum+probs[i]*2*Math.PI;
+      if(targetAng>=sum && targetAng<next) return i;
+      sum=next;
+    }
+    return probs.length-1;
+  }
+
+  /* spin */
+  document.getElementById('spin').onclick=()=>{
+    const rev=3+Math.random()*3, start=performance.now(), dur=1800;
+    function step(t){
+      const k=(t-start)/dur;
+      if(k<1){ rot=rev*k*2*Math.PI; draw(); requestAnimationFrame(step); }
+      else{
+        rot%=2*Math.PI; draw();
+        const idx=sectorAtPointer();
+        result.textContent=`Measured ${label(idx)}`;
+      }
+    }
+    requestAnimationFrame(step);
+  };
+
+})();
+</script>
+
+</body>
+</html>

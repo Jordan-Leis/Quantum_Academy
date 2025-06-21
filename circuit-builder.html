@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Quantum Gate Mini-Game</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+:root{
+  --bg:#161627;--main:#36416d;--secondary:#adbcff;--accent:#7ee081;
+  --text-light:#ecfef9;--text-dark:#0f0f1a;
+}
+*{box-sizing:border-box;margin:0;padding:0;font-family:sans-serif}
+
+/* -------- page background ---------------------------------------------*/
+body{
+  background-color:var(--bg);
+  background-image:none;
+  color:var(--text-light);
+  height:100vh;
+  display:flex;
+}
+
+/* -------- left panel --------------------------------------------------*/
+#sidebar{
+  width:150px;
+  background:var(--secondary);
+  padding:12px;
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+.gate{
+  width:100%;
+  aspect-ratio:1;
+  background:var(--main);
+  border-radius:12px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-weight:bold;
+  font-size:24px;
+  color:var(--text-light);
+  cursor:grab;
+  user-select:none;
+  transition:box-shadow .2s,transform .2s,filter .2s;
+}
+.gate:hover{
+  box-shadow:0 0 12px var(--accent);
+  filter:drop-shadow(2px 4px 6px rgba(0,0,0,0.65));
+  transform:translateY(-4px);
+}
+#reset{
+  margin-top:auto;
+  padding:10px 0;
+  background:var(--main);
+  border:none;
+  border-radius:12px;
+  font-size:18px;
+  color:var(--text-light);
+  cursor:pointer;
+}
+
+/* -------- right panel -------------------------------------------------*/
+main{
+  flex:1;
+  display:grid;
+  grid-template-rows:25% 75%;
+}
+#topbar{
+  position:relative;
+  background:var(--main);
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  gap:80px;
+}
+.slot{
+  width:160px;
+  height:160px;
+  border-radius:20px;
+  background:var(--secondary);
+  border:2px solid var(--text-dark);
+  position:relative;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:52px;
+  font-weight:bold;
+  color:var(--text-dark);
+  z-index:1;
+}
+.slot::before{
+  content:"";
+  position:absolute;
+  inset:14%;
+  border:4px dashed var(--text-light);
+  border-radius:15px;
+  pointer-events:none;
+}
+.slot:not(:last-child)::after{
+  content:"";
+  position:absolute;
+  top:50%;
+  left:100%;
+  width:80px;
+  height:0;
+  border-top:6px dashed var(--text-dark);
+  transform:translateY(-50%);
+  pointer-events:none;
+  z-index:0;
+}
+#stage{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+canvas{background:var(--bg)}
+
+/* -------- tool-tip ----------------------------------------------------*/
+#tooltip{
+  position:fixed;
+  pointer-events:none;
+  display:none;
+  background:var(--main);
+  border:2px solid var(--accent);
+  border-radius:12px;
+  padding:10px;
+  z-index:2000;
+  box-shadow:0 0 10px #0006;
+}
+#tooltip canvas{display:block}
+#tooltip p{
+  margin-top:4px;
+  font-size:14px;
+  text-align:center;
+  color:var(--text-light);
+}
+
+/* -------- win / fail pop-up ------------------------------------------*/
+#overlay{
+  position:fixed;
+  inset:0;
+  background:rgba(22,22,39,.9);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  z-index:1000;
+}
+#popup{
+  background:var(--main);
+  padding:40px 60px;
+  border-radius:20px;
+  text-align:center;
+  animation:pop .6s ease-out both;
+}
+#popup h1{color:var(--accent);font-size:48px;margin-bottom:14px}
+#popup p{font-size:20px;margin-bottom:28px}
+#actionBtn{
+  background:var(--accent);
+  border:none;
+  padding:12px 32px;
+  font-size:20px;
+  border-radius:12px;
+  color:var(--text-dark);
+  cursor:pointer;
+}
+@keyframes pop{
+  0%{transform:scale(.3);opacity:0}
+  70%{transform:scale(1.05)}
+  100%{transform:scale(1);opacity:1}
+}
+</style>
+</head>
+<body>
+
+<!-- ---------- left column --------------------------------------------->
+<section id="sidebar">
+  <div class="gate" draggable="true" data-gate="X">X</div>
+  <div class="gate" draggable="true" data-gate="Y">Y</div>
+  <div class="gate" draggable="true" data-gate="Z">Z</div>
+  <div class="gate" draggable="true" data-gate="S">S</div>
+  <div class="gate" draggable="true" data-gate="P">P</div>
+  <button id="reset">Reset</button>
+</section>
+
+<!-- ---------- right column -------------------------------------------->
+<main>
+  <div id="topbar">
+    <div class="slot" data-pos="0"></div>
+    <div class="slot" data-pos="1"></div>
+    <div class="slot" data-pos="2"></div>
+    <div class="slot" data-pos="3"></div>
+  </div>
+  <div id="stage">
+    <canvas id="bloch" width="600" height="450"></canvas>
+  </div>
+</main>
+
+<!-- ---------- tool-tip ------------------------------------------------->
+<div id="tooltip">
+  <canvas id="tipCanvas" width="120" height="120"></canvas>
+  <p id="tipText"></p>
+</div>
+
+<!-- ---------- pop-up --------------------------------------------------->
+<div id="overlay">
+  <div id="popup">
+    <h1 id="popTitle">Congratulations!</h1>
+    <p id="popMsg">You fixed the state vector!</p>
+    <button id="actionBtn">Play again</button>
+  </div>
+</div>
+
+<!-- confetti library -->
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+
+<script>
+/* ---------- helpers ----------------------------------------------------*/
+const norm=a=>(a%360+360)%360;
+const rndTarget=()=>{let n;do{n=Math.floor(Math.random()*17)-8}while(n===0||n%4===0);return norm(90+n*22.5)};
+const deg=d=>d*Math.PI/180;
+
+/* ---------- state ------------------------------------------------------*/
+let stateAngle=90,targetAngle=rndTarget(),won=false;
+
+/* ---------- DOM refs ---------------------------------------------------*/
+const canvas=document.getElementById('bloch'),ctx=canvas.getContext('2d');
+const W=canvas.width,H=canvas.height,cx=W/2,cy=H/2,r=Math.min(W,H)/2-30;
+const tooltip=document.getElementById('tooltip');
+const tipCanvas=document.getElementById('tipCanvas'),tctx=tipCanvas.getContext('2d');
+const tipTxt=document.getElementById('tipText');
+let demoTimer=null;
+
+/* ---------- tooltip demo ----------------------------------------------*/
+const gateInfo={
+  X:{text:'Flip over X axis',start:30,end:-30},
+  Y:{text:'Flip over Y axis',start:45,end:135},
+  Z:{text:'Nudge toward up',start:120,end:90},
+  S:{text:'Rotate 45° CW',start:0,end:-45},
+  P:{text:'Rotate 45° CCW',start:0,end:45}
+};
+document.querySelectorAll('.gate').forEach(g=>{
+  g.addEventListener('mouseenter',e=>showTip(e,g.dataset.gate));
+  g.addEventListener('mousemove',moveTip);
+  g.addEventListener('mouseleave',hideTip);
+});
+function showTip(e,gate){
+  const info=gateInfo[gate];
+  if(!info) return;
+  tipTxt.textContent=info.text;
+  tooltip.style.display='block';
+  moveTip(e);
+  startDemo(info.start,info.end);
+}
+function moveTip(e){
+  tooltip.style.left=(e.clientX+15)+'px';
+  tooltip.style.top=(e.clientY+15)+'px';
+}
+function hideTip(){
+  tooltip.style.display='none';
+  clearInterval(demoTimer);
+}
+function startDemo(a0,a1){
+  clearInterval(demoTimer);
+  const cx=60,cy=60,r=40;
+  let t=0;
+  demoTimer=setInterval(()=>{
+    t+=0.05;
+    const prog=0.5-0.5*Math.cos(t);
+    const ang=a0+(a1-a0)*prog;
+    tctx.clearRect(0,0,120,120);
+    tctx.lineWidth=3;
+    tctx.strokeStyle=getComputedStyle(document.documentElement).getPropertyValue('--text-light').trim();
+    tctx.beginPath();
+    tctx.arc(cx,cy,r,0,Math.PI*2);
+    tctx.stroke();
+    drawTipArrow(ang);
+  },40);
+}
+function drawTipArrow(angle){
+  const cx=60,cy=60,r=40;
+  const rad=deg(angle);
+  const x=cx+r*Math.cos(rad),y=cy-r*Math.sin(rad);
+  tctx.lineWidth=4;
+  tctx.strokeStyle=getComputedStyle(document.documentElement).getPropertyValue('--accent').trim();
+  tctx.beginPath();
+  tctx.moveTo(cx,cy);
+  tctx.lineTo(x,y);
+  tctx.stroke();
+  const hl=10;
+  const h1x=x-hl*Math.cos(rad-Math.PI/6),h1y=y+hl*Math.sin(rad-Math.PI/6);
+  const h2x=x-hl*Math.cos(rad+Math.PI/6),h2y=y+hl*Math.sin(rad+Math.PI/6);
+  tctx.beginPath();
+  tctx.moveTo(x,y);
+  tctx.lineTo(h1x,h1y);
+  tctx.moveTo(x,y);
+  tctx.lineTo(h2x,h2y);
+  tctx.stroke();
+}
+
+/* ---------- reset ------------------------------------------------------*/
+function doReset(){
+  document.querySelectorAll('.slot').forEach(s=>{
+    s.textContent='';
+    delete s.dataset.gate;
+  });
+  stateAngle=90;
+  targetAngle=rndTarget();
+  won=false;
+  document.getElementById('overlay').style.display='none';
+  draw();
+}
+document.getElementById('reset').onclick=doReset;
+
+/* ---------- drag & drop ------------------------------------------------*/
+document.querySelectorAll('.gate').forEach(el=>{
+  el.addEventListener('dragstart',e=>e.dataTransfer.setData('text/plain',el.dataset.gate));
+});
+document.querySelectorAll('.slot').forEach(slot=>{
+  slot.addEventListener('dragover',e=>e.preventDefault());
+  slot.addEventListener('drop',e=>{
+    e.preventDefault();
+    const gate=e.dataTransfer.getData('text/plain');
+    if(!gate) return;
+    slot.textContent=gate;
+    slot.dataset.gate=gate;
+    applyGates();
+  });
+});
+
+/* ---------- gate functions --------------------------------------------*/
+const gateFunc={
+  X:a=>norm(-a),
+  Y:a=>norm(180-a),
+  Z:a=>{
+    const cw=norm(90-a),ccw=norm(a-90);
+    const step=cw<=ccw?Math.min(cw,22.5):-Math.min(ccw,22.5);
+    return norm(a+step);
+  },
+  S:a=>norm(a-45),
+  P:a=>norm(a+45)
+};
+function applyGates(){
+  stateAngle=90;
+  document.querySelectorAll('.slot').forEach(s=>{
+    const g=s.dataset.gate;
+    if(g) stateAngle=gateFunc[g](stateAngle);
+  });
+  draw();
+  evaluate();
+}
+
+/* ---------- win / fail pop-up -----------------------------------------*/
+function evaluate(){
+  const filled=[...document.querySelectorAll('.slot')].every(s=>s.dataset.gate);
+  if(stateAngle===targetAngle){
+    if(!won) showOverlay(true);
+  }else if(filled){
+    showOverlay(false);
+  }
+}
+function showOverlay(isWin){
+  won=isWin;
+  const o=document.getElementById('overlay');
+  const title=document.getElementById('popTitle');
+  const msg=document.getElementById('popMsg');
+  const btn=document.getElementById('actionBtn');
+  if(isWin){
+    title.textContent='Congratulations!';
+    msg.textContent='You fixed the state vector!';
+    btn.textContent='Play again';
+    confetti({particleCount:180,spread:90,origin:{y:0.3}});
+    setTimeout(()=>confetti({particleCount:120,spread:70,origin:{y:0.6}}),250);
+  }else{
+    title.textContent='So close!';
+    msg.textContent='Quantum computing is hard';
+    btn.textContent='Try again';
+  }
+  o.style.display='flex';
+}
+document.getElementById('actionBtn').onclick=doReset;
+
+/* ---------- main drawing ----------------------------------------------*/
+function drawArrow(angle,opt){
+  const rad=deg(angle);
+  const x=cx+r*Math.cos(rad),y=cy-r*Math.sin(rad);
+  ctx.lineWidth=opt.line;
+  ctx.strokeStyle=opt.color;
+  ctx.setLineDash(opt.dash?[8,4]:[]);
+  ctx.beginPath();
+  ctx.moveTo(cx,cy);
+  ctx.lineTo(x,y);
+  ctx.stroke();
+  const hl=20;
+  const h1x=x-hl*Math.cos(rad-Math.PI/6),h1y=y+hl*Math.sin(rad-Math.PI/6);
+  const h2x=x-hl*Math.cos(rad+Math.PI/6),h2y=y+hl*Math.sin(rad+Math.PI/6);
+  ctx.beginPath();
+  ctx.moveTo(x,y);
+  ctx.lineTo(h1x,h1y);
+  ctx.moveTo(x,y);
+  ctx.lineTo(h2x,h2y);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  if(opt.fillDot){
+    ctx.beginPath();
+    ctx.arc(cx,cy,6,0,Math.PI*2);
+    ctx.fillStyle=opt.color;
+    ctx.fill();
+  }
+}
+function draw(){
+  const textLight=getComputedStyle(document.documentElement).getPropertyValue('--text-light').trim();
+  const accent=getComputedStyle(document.documentElement).getPropertyValue('--accent').trim();
+  ctx.clearRect(0,0,W,H);
+  ctx.lineWidth=4;
+  ctx.strokeStyle=textLight;
+  ctx.beginPath();
+  ctx.arc(cx,cy,r,0,Math.PI*2);
+  ctx.stroke();
+  drawArrow(targetAngle,{color:accent,line:6,dash:true,fillDot:false});
+  drawArrow(stateAngle,{color:accent,line:8,dash:false,fillDot:true});
+}
+draw();
+</script>
+</body>
+</html>

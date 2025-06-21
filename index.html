@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quantum Academy - Play with Quantum. Understand the Future.</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@700&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg: #161627;
+            --main: #36416d;
+            --secondary: #adbcff;
+            --accent: #7ee081;
+            --light: #ecfef9;
+            --dark: #0f0f1a;
+            --cta: #00cfff;
+            --max-width: 1180px;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg);
+            color: var(--light);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Navigation */
+        .nav {
+            position: fixed;
+            top: 0;
+            right: 0;
+            left: 0;
+            z-index: 1000;
+            padding: 16px 24px;
+            transition: all 0.3s ease;
+        }
+
+        .nav.scrolled {
+            background-color: rgba(22, 22, 39, 0.95);
+            backdrop-filter: blur(10px);
+        }
+
+        .nav-container {
+            max-width: var(--max-width);
+            margin: 0 auto;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 32px;
+            list-style: none;
+        }
+
+        .nav-link {
+            color: var(--light);
+            text-decoration: none;
+            font-size: 16px;
+            font-weight: 400;
+            transition: color 0.3s ease;
+        }
+
+        .nav-link:hover, .nav-link:focus {
+            color: var(--cta);
+            outline: none;
+        }
+
+        .nav-link:focus {
+            box-shadow: 0 0 0 2px var(--cta);
+            border-radius: 4px;
+        }
+
+        /* Container */
+        .container {
+            max-width: var(--max-width);
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        /* Section spacing */
+        .section {
+            padding: 64px 0;
+        }
+
+        /* Hero Section */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            padding-top: 80px;
+        }
+
+        .hero-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 64px;
+            align-items: center;
+        }
+
+        .hero-left h1 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 700;
+            font-size: clamp(36px, 5vw, 56px);
+            letter-spacing: 0.5px;
+            margin-bottom: 24px;
+            background: linear-gradient(135deg, var(--light), var(--cta));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-subtitle {
+            font-size: 20px;
+            color: rgba(236, 254, 249, 0.8);
+            margin-bottom: 32px;
+            font-weight: 400;
+        }
+
+        .cta-button {
+            background: var(--cta);
+            color: var(--dark);
+            padding: 16px 32px;
+            border: none;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: 700;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.4s ease;
+            margin-bottom: 24px;
+        }
+
+        .cta-button:hover, .cta-button:focus {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 207, 255, 0.3);
+            outline: none;
+        }
+
+        .cta-button:focus {
+            box-shadow: 0 0 0 2px var(--cta), 0 8px 25px rgba(0, 207, 255, 0.3);
+        }
+
+        .trust-badges {
+            display: flex;
+            gap: 16px;
+            font-size: 14px;
+            color: rgba(236, 254, 249, 0.7);
+            align-items: center;
+        }
+
+        .trust-badge {
+            color: var(--light);
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .trust-badge:hover, .trust-badge:focus {
+            color: var(--cta);
+            outline: none;
+        }
+
+        .badge-separator {
+            color: var(--accent);
+        }
+
+        /* Hero 3D Canvas */
+        #hero-canvas {
+            width: 100%;
+            max-width: 600px;
+            height: 600px;
+            border-radius: 16px;
+            background: radial-gradient(circle at center, rgba(126, 224, 129, 0.05), transparent 70%);
+        }
+
+        /* About Section */
+        .about {
+            text-align: center;
+        }
+
+        .about-title {
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 700;
+            font-size: 36px;
+            letter-spacing: 0.5px;
+            margin-bottom: 24px;
+        }
+
+        .about-body {
+            font-size: 18px;
+            color: rgba(236, 254, 249, 0.9);
+            max-width: 800px;
+            margin: 0 auto 32px;
+            line-height: 1.7;
+        }
+
+        .about-link {
+            color: var(--cta);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+
+        .about-link:hover, .about-link:focus {
+            color: var(--accent);
+            outline: none;
+        }
+
+        /* Message Pillars */
+        .pillars {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 32px;
+            margin-top: 32px;
+        }
+
+        .pillar-card {
+            background: rgba(54, 65, 109, 0.3);
+            border: 1px solid rgba(173, 188, 255, 0.2);
+            border-radius: 16px;
+            padding: 32px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .pillar-card:hover {
+            transform: translateY(-4px);
+            border-color: var(--accent);
+            box-shadow: 0 8px 25px rgba(126, 224, 129, 0.15);
+        }
+
+        .pillar-icon {
+            width: 64px;
+            height: 64px;
+            background: var(--main);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 24px;
+            font-size: 24px;
+        }
+
+        .pillar-title {
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 700;
+            font-size: 20px;
+            margin-bottom: 16px;
+        }
+
+        .pillar-description {
+            color: rgba(236, 254, 249, 0.8);
+            font-size: 16px;
+        }
+
+        /* Community Section */
+        .community {
+            text-align: center;
+        }
+
+        .community-title {
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 700;
+            font-size: 28px;
+            margin-bottom: 32px;
+        }
+
+        .community-button {
+            background: rgba(126, 224, 129, 0.2);
+            border: 1px solid var(--accent);
+            color: var(--light);
+            padding: 16px 32px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            display: inline-block;
+        }
+
+        .community-button:hover, .community-button:focus {
+            background: var(--accent);
+            color: var(--dark);
+            transform: translateY(-2px);
+            outline: none;
+        }
+
+        .community-button:focus {
+            box-shadow: 0 0 0 2px var(--cta);
+        }
+
+        /* Footer */
+        .footer {
+            border-top: 1px solid rgba(173, 188, 255, 0.2);
+            padding: 32px 0;
+            margin-top: 64px;
+        }
+
+        .footer-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .footer-left {
+            color: rgba(236, 254, 249, 0.7);
+            font-size: 14px;
+        }
+
+        .footer-links {
+            display: flex;
+            gap: 24px;
+        }
+
+        .footer-link {
+            color: rgba(236, 254, 249, 0.7);
+            text-decoration: none;
+            font-size: 14px;
+            transition: color 0.3s ease;
+        }
+
+        .footer-link:hover, .footer-link:focus {
+            color: var(--cta);
+            outline: none;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 900px) {
+            .nav-links {
+                gap: 16px;
+                flex-wrap: wrap;
+            }
+
+            .nav-link {
+                font-size: 14px;
+            }
+        }
+
+        @media (max-width: 800px) {
+            .hero-content {
+                grid-template-columns: 1fr;
+                gap: 32px;
+                text-align: center;
+            }
+
+            #hero-canvas {
+                height: 400px;
+            }
+
+            .pillars {
+                grid-template-columns: 1fr;
+            }
+
+            .footer-content {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .trust-badges {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+        }
+
+        /* Accessibility - Reduced Motion */
+        @media (prefers-reduced-motion: reduce) {
+            .cta-button:hover {
+                transform: none;
+            }
+            
+            .pillar-card:hover {
+                transform: none;
+            }
+            
+            .community-button:hover {
+                transform: none;
+            }
+        }
+
+        /* Focus styles for accessibility */
+        *:focus-visible {
+            outline: 2px solid var(--cta);
+            outline-offset: 2px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="nav" id="navbar">
+        <div class="nav-container">
+            <ul class="nav-links">
+                <li><a href="playground.html" class="nav-link">Playground</a></li>
+                <li><a href="#" class="nav-link">How It Works</a></li>
+                <li><a href="#" class="nav-link">For Individuals</a></li>
+                <li><a href="#" class="nav-link">For Educators</a></li>
+                <li><a href="#" class="nav-link">About</a></li>
+                <li><a href="#" class="nav-link">Login</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <main>
+        <section class="hero section">
+            <div class="container">
+                <div class="hero-content">
+                    <div class="hero-left">
+                        <h1>Play with Quantum. Understand the Future.</h1>
+                        <p class="hero-subtitle">Explore quantum concepts through interactive demos—no PhD required.</p>
+                        <a href="playground.html" class="cta-button">Enter the Quantum Playground</a>
+                        <div class="trust-badges">
+                            <a href="#experts" class="trust-badge">Built with Experts</a>
+                            <span class="badge-separator">▪︎</span>
+                            <a href="#discord" class="trust-badge">Join our Community</a>
+                        </div>
+                    </div>
+                    <div class="hero-right">
+                        <canvas id="hero-canvas"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- About Section -->
+        <section class="about section">
+            <div class="container">
+                <h2 class="about-title">Quantum Computing, Decoded for Everyone</h2>
+                <p class="about-body">
+                    We're translating cutting-edge quantum research into hands-on learning experiences that anyone—from high-school students to educators—can grasp. Our interactive approach makes abstract quantum phenomena tangible and intuitive.
+                </p>
+                <a href="#about-us" class="about-link">Learn more about us →</a>
+            </div>
+        </section>
+
+        <!-- Message Pillars -->
+        <section class="section">
+            <div class="container">
+                <div class="pillars">
+                    <div class="pillar-card">
+                        <div class="pillar-icon">🎮</div>
+                        <h3 class="pillar-title">Interactive Learning</h3>
+                        <p class="pillar-description">Manipulate quantum states in real-time. See abstract concepts come alive through hands-on exploration.</p>
+                    </div>
+                    <div class="pillar-card">
+                        <div class="pillar-icon">🌍</div>
+                        <h3 class="pillar-title">Accessible for All</h3>
+                        <p class="pillar-description">No quantum physics background needed. Start with basics and build your understanding step by step.</p>
+                    </div>
+                    <div class="pillar-card">
+                        <div class="pillar-icon">⚛️</div>
+                        <h3 class="pillar-title">Built by Quantum Enthusiasts</h3>
+                        <p class="pillar-description">Created by researchers and educators passionate about making quantum computing approachable for everyone.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Community Section -->
+        <section class="community section">
+            <div class="container">
+                <h2 class="community-title">Join 100+ early quantum explorers</h2>
+                <a href="#discord-invite" class="community-button">💬 Join Discord Community</a>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-left">
+                    © 2025 Quantum Academy • MIT License
+                </div>
+                <div class="footer-links">
+                    <a href="#privacy" class="footer-link">Privacy</a>
+                    <a href="#terms" class="footer-link">Terms</a>
+                    <a href="#github" class="footer-link">GitHub</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        // Navbar scroll effect
+        window.addEventListener('scroll', () => {
+            const navbar = document.getElementById('navbar');
+            if (window.scrollY > 50) {
+                navbar.classList.add('scrolled');
+            } else {
+                navbar.classList.remove('scrolled');
+            }
+        });
+
+        // Three.js Bloch Sphere
+        function initHeroCanvas() {
+            const canvas = document.getElementById('hero-canvas');
+            const rect = canvas.getBoundingClientRect();
+            
+            // Scene setup
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(75, rect.width / rect.height, 0.1, 1000);
+            const renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true, antialias: true });
+            
+            renderer.setSize(rect.width, rect.height);
+            renderer.setClearColor(0x000000, 0);
+            
+            // Create wireframe sphere
+            const sphereGeometry = new THREE.SphereGeometry(2, 32, 32);
+            const sphereMaterial = new THREE.MeshBasicMaterial({ 
+                wireframe: true, 
+                color: 0x704ef9,
+                transparent: true,
+                opacity: 0.6
+            });
+            const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
+            scene.add(sphere);
+            
+            // Create quantum state vector
+            const vector = new THREE.ArrowHelper(
+                new THREE.Vector3(0, 1, 0), 
+                new THREE.Vector3(0, 0, 0), 
+                2, 
+                0x00cfff,
+                0.8,
+                0.4
+            );
+            scene.add(vector);
+            
+            // Position camera
+            camera.position.z = 5;
+            
+            // Animation variables
+            let mouseX = 0;
+            let mouseY = 0;
+            let targetRotationX = 0;
+            let targetRotationY = 0;
+            let isAnimating = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            
+            // Mouse tracking
+            window.addEventListener('pointermove', (e) => {
+                const x = (e.clientX / window.innerWidth) * 2 - 1;
+                const y = -(e.clientY / window.innerHeight) * 2 + 1;
+                
+                mouseX = x;
+                mouseY = y;
+                
+                // Update vector direction based on mouse position
+                const direction = new THREE.Vector3(x, y, 0.2).normalize();
+                vector.setDirection(direction);
+            });
+            
+            // Animation loop
+            function animate() {
+                requestAnimationFrame(animate);
+                
+                if (isAnimating) {
+                    // Rotate sphere slowly
+                    sphere.rotation.y += 0.005;
+                    sphere.rotation.z += 0.003;
+                    
+                    // Gentle camera sway
+                    targetRotationX = mouseY * 0.1;
+                    targetRotationY = mouseX * 0.1;
+                    
+                    camera.rotation.x += (targetRotationX - camera.rotation.x) * 0.05;
+                    camera.rotation.y += (targetRotationY - camera.rotation.y) * 0.05;
+                }
+                
+                renderer.render(scene, camera);
+            }
+            
+            // Handle window resize
+            window.addEventListener('resize', () => {
+                const newRect = canvas.getBoundingClientRect();
+                camera.aspect = newRect.width / newRect.height;
+                camera.updateProjectionMatrix();
+                renderer.setSize(newRect.width, newRect.height);
+            });
+            
+            // Start animation
+            animate();
+            
+            // Respect reduced motion preference
+            const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+            mediaQuery.addListener((e) => {
+                isAnimating = !e.matches;
+            });
+        }
+        
+        // Initialize when page loads
+        window.addEventListener('load', initHeroCanvas);
+    </script>
+</body>
+</html>
