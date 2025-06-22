@@ -99,7 +99,7 @@
             min-height: 100vh;
             display: flex;
             align-items: center;
-            padding-top: 80px;
+            padding-top: 100px;
         }
 
         .hero-content {
@@ -390,6 +390,20 @@
                 transform: none;
             }
         }
+/* ======  NAVBAR LOGO  ====== */
+.logo img{
+height:auto;          /* keeps it compact */
+  width:200px;
+  display:block;
+}
+
+/* make the logo sit left, links flush right */
+.nav-container{
+  display:flex;       /* in case it isn't already */
+  align-items:center;
+  justify-content:space-between;
+}
+
 
         /* Focus styles for accessibility */
         *:focus-visible {
@@ -400,18 +414,25 @@
 </head>
 <body>
     <!-- Navigation -->
-    <nav class="nav" id="navbar">
-        <div class="nav-container">
-            <ul class="nav-links">
-                <li><a href="playground.html" class="nav-link">Playground</a></li>
-                <li><a href="#" class="nav-link">How It Works</a></li>
-                <li><a href="#" class="nav-link">For Individuals</a></li>
-                <li><a href="#" class="nav-link">For Educators</a></li>
-                <li><a href="#" class="nav-link">About</a></li>
-                <li><a href="#" class="nav-link">Login</a></li>
-            </ul>
-        </div>
-    </nav>
+    <!-- Navigation -->
+<nav class="nav" id="navbar">
+  <div class="nav-container">
+    <!-- site logo -->
+    <a href="index.html" class="logo">
+      <img src="assets/Site-nav-logo.png" alt="Quantum Academy logo">
+    </a>
+
+    <ul class="nav-links">
+      <li><a href="playground.html" class="nav-link">Playground</a></li>
+      <li><a href="#" class="nav-link">How It Works</a></li>
+      <li><a href="#" class="nav-link">For Individuals</a></li>
+      <li><a href="#" class="nav-link">For Educators</a></li>
+      <li><a href="#" class="nav-link">About</a></li>
+      <li><a href="#" class="nav-link">Login</a></li>
+    </ul>
+  </div>
+</nav>
+
 
     <!-- Hero Section -->
     <main>

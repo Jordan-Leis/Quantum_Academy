@@ -91,7 +91,7 @@
 
         /* Hero Section */
         .hero {
-            padding: 120px 2rem 40px;
+            padding-top: 100px;
             text-align: center;
             max-width: 1180px;
             margin: 0 auto;
@@ -317,21 +317,43 @@
                 text-align: center;
             }
         }
+		
+		/* logo sizing */
+.logo img{
+ height:auto;          /* keeps it compact */
+  width:200px;
+  display:block;
+}
+
+/* make the logo sit left and the links flush right */
+.nav-container{
+  display:flex;         /* already true in many templates, but add if missing */
+  align-items:center;
+  justify-content:space-between;
+}
+
+		
     </style>
 </head>
 <body>
     <nav id="navbar">
-        <div class="nav-container">
-            <ul class="nav-links">
-                <li><a href="playground.html" class="active">Playground</a></li>
-                <li><a href="#">How It Works</a></li>
-                <li><a href="#">For Individuals</a></li>
-                <li><a href="#">For Educators</a></li>
-                <li><a href="#">About</a></li>
-                <li><a href="#">Login</a></li>
-            </ul>
-        </div>
-    </nav>
+  <div class="nav-container">
+    <a href="index.html" class="logo">
+      <img src="assets/Site-nav-logo.png" alt="Quantum Academy logo">
+    </a>
+
+    <ul class="nav-links">
+      <li><a href="playground.html" class="active">Playground</a></li>
+      <li><a href="#">How It Works</a></li>
+      <li><a href="#">For Individuals</a></li>
+      <li><a href="#">For Educators</a></li>
+      <li><a href="#">About</a></li>
+      <li><a href="#">Login</a></li>
+    </ul>
+  </div>
+</nav>
+
+ 
 
     <div class="hero">
         <h1 class="heroTitle">The Quantum Playground</h1>
